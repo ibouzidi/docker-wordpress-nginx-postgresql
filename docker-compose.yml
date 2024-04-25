@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:5.7
+    container_name: wordpress_db
+    command: --default-authentication-plugin=mysql_native_password
+    env_file: .env
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - wordpress_network
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:php7.4-fpm-alpine
+    container_name: wordpress_app
+    env_file: .env
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./wp-content:/var/www/html/wp-content
+    networks:
+      - wordpress_network
+
+  nginx:
+    image: nginx:alpine
+    container_name: wordpress_nginx
+    depends_on:
+      - wordpress
+    ports:
+      - "80:80"
+    volumes:
+      - wordpress_data:/var/www/html
+      - ./nginx:/etc/nginx/conf.d
+    networks:
+      - wordpress_network
+
+volumes:
+  db_data:
+  wordpress_data:
+
+networks:
+  wordpress_network:
+    driver: bridge
